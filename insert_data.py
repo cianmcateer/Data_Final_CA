@@ -7,7 +7,7 @@ try:
 except:
     print("Could not connect to mongo server")
 
-"""Set database and collection we are inserting to"""    
+"""Set database and collection we are inserting to"""
 db = client.final_data
 collection = db.students
 
@@ -33,8 +33,13 @@ for i in range(1, len(lines)):
 
     student["student_id"] = int(attributes[0])
     student["tests"] = tests
+    # Cast to bool to transform '0' and '1' to 'False' and 'True'
     student["part_time_job"] = bool(attributes[6])
 
     # Insert student object into student collection
     # Value is parsed from python dict to JSON string automatically
-    result = db.students.insert_one(student)
+    try:
+        result = db.students.insert_one(student)
+    except:
+        print("Error inserting CSV data")
+print("Data has been successfully added to server!")

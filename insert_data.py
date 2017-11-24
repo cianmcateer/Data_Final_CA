@@ -11,10 +11,11 @@ except:
 db = client.final_data
 collection = db.students
 
-path = "year_3/semester_1/data_final_ca/FinalProjectData1718.csv"
+path = "FinalProjectData1718.csv"
 
 """Put all csv data into a list of strings"""
 lines = [line for line in open(path)]
+print(lines[0])
 
 for i in range(1, len(lines)):
     """
@@ -35,6 +36,7 @@ for i in range(1, len(lines)):
     student["tests"] = tests
     # Cast to bool to transform '0' and '1' to 'False' and 'True'
     student["part_time_job"] = bool(attributes[6])
+    student["final_grade"] = int(attributes[7])
 
     # Insert student object into student collection
     # Value is parsed from python dict to JSON string automatically

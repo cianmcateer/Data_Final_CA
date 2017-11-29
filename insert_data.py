@@ -2,7 +2,7 @@
 from pymongo import MongoClient
 
 try:
-    """Connect to mongod"""
+    """Connect to mongod server"""
     client = MongoClient('localhost')
 except:
     print("Could not connect to mongo server")
@@ -11,7 +11,7 @@ except:
 db = client.final_data
 collection = db.students
 
-path = "FinalProjectData1718.csv"
+path = "/Users/CianMcAteer/year_3/semester_1/data_final_ca/FinalProjectData1718.csv"
 
 """Put all csv data into a list of strings"""
 lines = [line for line in open(path)]
@@ -34,8 +34,7 @@ for i in range(1, len(lines)):
 
     student["student_id"] = int(attributes[0])
     student["tests"] = tests
-    # Cast to bool to transform '0' and '1' to 'False' and 'True'
-    student["part_time_job"] = bool(attributes[6])
+    student["part_time_job"] = attributes[6] == '1' 
     student["final_grade"] = int(attributes[7])
 
     # Insert student object into student collection

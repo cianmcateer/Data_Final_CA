@@ -1,0 +1,8 @@
+#####################################
+#               Graphs
+# 1. Scatter plot Final grades vs previous exams
+# 2. Line graph comparison Final grades vs previous exams
+# 3. Scatter plot Final grades vs previous exams (Employed)
+# 4. Scatter plot Final grades vs previous exams (Unemployed)
+# 5. Grades employed vs unemployed
+#####################################

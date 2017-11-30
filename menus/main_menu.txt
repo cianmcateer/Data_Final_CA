@@ -1,0 +1,9 @@
+#####################################
+#               Main menu           #
+# 0. Exit                           #
+# 1. Plots                          #
+# 2. Linear Regression              #
+# 3. Multiple linear Regression     #
+# 4. K means cluster                #
+# 5. Principle component analysis   #
+#####################################

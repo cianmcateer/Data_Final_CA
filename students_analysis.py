@@ -4,6 +4,11 @@ import matplotlib.pyplot as plt
 from copy import deepcopy
 
 
+def read_menu(path):
+    menu = [line for line in open(path)]
+    for m in menu:
+        print(m)
+
 def extract_json():
     try:
         """Connect to mongod"""
@@ -35,8 +40,6 @@ def to_list():
         final_grades.append(s["final_grade"])
 
 to_list()
-
-
 
 
 
@@ -90,15 +93,54 @@ tests_no = []
 for i in range(len(tests)):
     tests_no.append([lab_1_no[i], christmas_test_no[i], lab_2_no[i], easter_test_no[i], lab_3_no[i]])
 
-"""Plots"""
+menu = True
 
-def scatter_data(x, y, title):
-    plt.title(title)
-    plt.xlabel("Final Grades")
-    plt.scatter(x, y, alpha=0.3)
-    plt.grid()
-    plt.show()
 
-for j in range(len(tests[0])):
-    scatter_data(final_grades, [tests[i][j] for i in range(len(tests))], "with Outliers")
-    scatter_data(replace_outliers(final_grades), replace_outliers([tests[i][j] for i in range(len(tests))]), "No outliers")
+has_job_grades = [final_grades[i] for i in range(len(tests)) if has_job[i]]
+no_job_grades = [final_grades[i] for i in range(len(tests)) if not has_job[i]]
+
+has_job_tests = [tests[i] for i in range(len(tests)) if has_job[i]]
+no_job_tests = [tests[i] for i in range(len(tests)) if not has_job[i]]
+
+
+
+while menu:
+    read_menu("menus/main_menu.txt")
+    choice = input("Please choose")
+
+    if choice == 0:
+        menu = False
+        print("Goodbye!")
+
+    elif choice == 1:
+        """Part 1"""
+        """Plots"""
+        read_menu("menus/graphs.txt")
+        choose_plot = input("Please choose plot")
+        def scatter_data(x, y, title):
+            plt.title(title)
+            plt.xlabel("Scatter Plot: Final Grades vs Tests")
+            plt.scatter(x, y, alpha=0.3)
+            plt.grid()
+            plt.show()
+
+        exams = ["Lab 1", "Christmas Test", "Lab 2", "Easter Test", "Lab 3"]
+        if choose_plot == 1:
+            for j in range(len(tests[0])):
+                scatter_data(final_grades, [tests[i][j] for i in range(len(tests))], "Final grade vs " + str(exams[j]))
+                scatter_data(replace_outliers(final_grades), replace_outliers([tests[i][j] for i in range(len(tests))]), "Final grade vs " + str(exams[j]) + "(No outliers)")
+
+        def line_graph(x, y, title):
+            plt.plot(x)
+            plt.plot(y)
+            plt.grid()
+            plt.title(title)
+            plt.show()
+
+        if choose_plot == 2:
+            for j in range(len(tests[0])):
+                line_graph(final_grades,[tests[i][j] for i in range(len(tests))], "Final grades vs " + str(exams[j]))
+                line_graph(replace_outliers(final_grades),replace_outliers([tests[i][j] for i in range(len(tests))]), "Final grades vs " + str(exams[j] + "(No outliers)"))
+
+    else:
+        print("Invalid input")

@@ -102,7 +102,17 @@ no_job_grades = [final_grades[i] for i in range(len(tests)) if not has_job[i]]
 has_job_tests = [tests[i] for i in range(len(tests)) if has_job[i]]
 no_job_tests = [tests[i] for i in range(len(tests)) if not has_job[i]]
 
+average_test_results = [round(np.mean(tests[i])) for i in range(len(tests))]
 
+print((average_test_results))
+def central_tendancy(message,func, data):
+    print(message + " " + str(func(data)))
+
+def pearson(x, y):
+    """
+    Returns pearson coeffcient using numpy
+    """
+    return np.corrcoef(x, y)[0][1]
 
 while menu:
     read_menu("menus/main_menu.txt")
@@ -142,5 +152,20 @@ while menu:
                 line_graph(final_grades,[tests[i][j] for i in range(len(tests))], "Final grades vs " + str(exams[j]))
                 line_graph(replace_outliers(final_grades),replace_outliers([tests[i][j] for i in range(len(tests))]), "Final grades vs " + str(exams[j] + "(No outliers)"))
 
+        if choose_plot == 3:
+            line_graph(has_job_grades, no_job_grades, "Final grades Employed vs Unemployed")
+            central_tendancy("Highest grade for Employed students",max, has_job_grades)
+            central_tendancy("Highest grade for unemployed students",min, no_job_grades)
+
+            print("Average grade for employed students", np.mean(has_job_grades))
+            print("Average grade for unemployed students", np.mean(no_job_grades))
+
+            central_tendancy("Lowest grade for Employed students",min,has_job_grades)
+            central_tendancy("Lowest grade for Unemployed students",min,no_job_grades)
+
+            print("Pearson correlation")
+            print("Mean of previous tests vs final exam " + pearson(average_test_results, final_grades))
+
+
     else:
-        print("Invalid input")
+        print("Invalid graph input")

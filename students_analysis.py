@@ -2,7 +2,8 @@ from pymongo import MongoClient
 import numpy as np
 import matplotlib.pyplot as plt
 from copy import deepcopy
-
+from sklearn.cluster import KMeans
+from scipy.spatial.distance import cdist
 
 def read_menu(path):
     menu = [line for line in open(path)]
@@ -104,7 +105,6 @@ no_job_tests = [tests[i] for i in range(len(tests)) if not has_job[i]]
 
 average_test_results = [round(np.mean(tests[i])) for i in range(len(tests))]
 
-print((average_test_results))
 def central_tendancy(message,func, data):
     print(message + " " + str(func(data)))
 
@@ -113,6 +113,32 @@ def pearson(x, y):
     Returns pearson coeffcient using numpy
     """
     return np.corrcoef(x, y)[0][1]
+
+def r_squared(x):
+    return x**2
+
+def least_squares_fit(x, y):
+    beta = pearson(x, y)*np.std(x)*np.std(y)
+    alpha = np.mean(y)-beta*np.mean(x)
+    return alpha, beta
+
+def pearson_results(coef):
+    if coef == 1:
+        print("Perfect positve correlation")
+    elif coef > 0.75:
+        print("Very strong positve correlation")
+    elif coef > 0.5:
+        print("Strong positve correlation")
+    elif coef > 0:
+        print("Positve correlation")
+    elif coef > -0.5:
+        print("Negative correlation")
+    elif coef > -0.75:
+        print("Strong Negative correlation")
+    elif coef == -1:
+        print("Perfect Negative coeffcient")
+    else:
+        print("Invalid value")
 
 while menu:
     read_menu("menus/main_menu.txt")
@@ -164,8 +190,130 @@ while menu:
             central_tendancy("Lowest grade for Unemployed students",min,no_job_grades)
 
             print("Pearson correlation")
-            print("Mean of previous tests vs final exam " + pearson(average_test_results, final_grades))
+            print("Correlation tests vs final exam " + str(pearson(average_test_results, final_grades)))
+            print(pearson_results(pearson(average_test_results, final_grades)))
 
+    elif choice == 2:
+        print("Linear regression")
+
+        for j in range(len(tests[0])):
+            alpha, beta = least_squares_fit(final_grades, [tests[i][j] for i in range(len(tests))])
+            y=pearson(final_grades,[tests[i][j] for i in range(len(tests))])
+            print("correlation between Finalgrade & test no " + str(j+1), y)
+            print("rsquared results Finalgrade & test no " + str(j+1),r_squared(y))
+            print("Alpha Finalgrade & test no " + str(j+1), alpha)
+            print("beta Finalgrade & test no " + str(j+1), beta)
+            print("Regression Line: y =", beta, "x +",alpha)
+            print("")
+            print("")
+
+
+        def predict_y(alpha,beta,x):
+        	return alpha+beta*x
+
+        def predict_x(alpha,beta,y):
+        	return (y-alpha)/beta
+
+        def impact_y_deltax(beta,x):
+        	return beta*x
+
+        #
+        # Residual's
+        # y_i = beta x_i + alpha + e_i,......   (e_i's are the errors)
+        #
+
+        def error(alpha,beta,x,y):
+        	error = y-predict_y(alpha,beta,x)
+        	return error
+
+        def de_mean(x):
+        	x_bar=np.mean(x)
+        	return[x_i-x_bar for x_i in x]
+
+        def sum_of_squared_errors(alpha,beta,x,y):
+        	return sum((error(alpha,beta,x_i,y_i)**2 for x_i, y_i in zip(x,y)))
+
+        def sum_of_squares(x):
+        	return sum([x_i**2 for x_i in x])
+
+        for j in range(len(tests[0])):
+            print(sum_of_squared_errors(alpha,beta,final_grades,[tests[i][j] for i in range(len(tests))]))
+
+        print("")
+
+        def r_squared(alpha,beta,x,y):
+        	return 1-(sum_of_squared_errors(alpha,beta,x,y)/sum_of_squares(de_mean(y)))
+
+        for j in range(len(tests[0])):
+            print(r_squared(alpha,beta,final_grades,[tests[i][j] for i in range(len(tests))]))
+
+
+        def least_squares_fit_test(x,y,i):
+        	beta = correlation(x,y)*np.std(y)/np.std(x)
+        	alpha = np.mean(y)-(beta+.1*i)*np.mean(x)
+        	return alpha, beta+.1*i
+
+    elif choice == 3:
+        print("multiple linear regression")
+
+    elif choice == 4:
+
+        def to_list(x, y):
+            l = []
+            for i in range(len(x)):
+                l.append([x[i], y[i]])
+            return l
+
+        def get_column(m, j):
+            return [m_i[j] for m_i in m]
+
+        for j in range(len(tests[0])):
+
+            final_grades_to_test = to_list(final_grades, [tests[i][j] for i in range(len(tests))])
+            print(final_grades_to_test)
+            print("K means clustering")
+            K_means = KMeans(n_clusters=4) # Define number of clusters
+
+            K_means.fit(final_grades_to_test)
+            cluster_assignment = K_means.predict(final_grades_to_test)    # Extracts
+            print("Shows which cluster values are assigned to")
+
+            cluster0 = []
+            cluster1 = []
+            cluster2 = []
+            cluster3 = []
+
+            for k in range(len(cluster_assignment)):
+                if cluster_assignment[k] == 0:
+                    cluster0.append(tests[k])
+                if cluster_assignment[k] == 1:
+                    cluster1.append(tests[k])
+                if cluster_assignment[k] == 2:
+                    cluster2.append(tests[k])
+                if cluster_assignment[k] == 3:
+                    cluster3.append(tests[k])
+
+            x_cluster0 = get_column(cluster0, 0)
+            y_cluster0 = get_column(cluster0, 1)
+
+            x_cluster1 = get_column(cluster1, 0)
+            y_cluster1 = get_column(cluster1, 1)
+
+            x_cluster2 = get_column(cluster2, 0)
+            y_cluster2 = get_column(cluster2, 1)
+
+            x_cluster3 = get_column(cluster3, 0)
+            y_cluster3 = get_column(cluster3, 1)
+
+            plt.scatter(x=x_cluster0, y=y_cluster0, color='green')
+            plt.scatter(x=x_cluster1, y=y_cluster1, color='red')
+            plt.scatter(x=x_cluster2, y=y_cluster2, color='blue')
+            plt.scatter(x=x_cluster3, y=y_cluster3, color='black')
+            plt.show()
+
+
+    elif choice == 5:
+        print("Principle componant analysis")
 
     else:
-        print("Invalid graph input")
+        print("Invalid input, please try again")

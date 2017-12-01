@@ -143,10 +143,11 @@ def pearson_results(coef):
 while menu:
     read_menu("menus/main_menu.txt")
     choice = input("Please choose")
-
+    exams = ["Lab 1", "Christmas Test", "Lab 2", "Easter Test", "Lab 3"]
     if choice == 0:
         menu = False
         print("Goodbye!")
+
 
     elif choice == 1:
         """Part 1"""
@@ -166,20 +167,21 @@ while menu:
                 scatter_data(final_grades, [tests[i][j] for i in range(len(tests))], "Final grade vs " + str(exams[j]))
                 scatter_data(replace_outliers(final_grades), replace_outliers([tests[i][j] for i in range(len(tests))]), "Final grade vs " + str(exams[j]) + "(No outliers)")
 
-        def line_graph(x, y, title):
-            plt.plot(x)
-            plt.plot(y)
+        def line_graph(x, y, title, x_label, y_label):
+            plt.plot(x, label=x_label)
+            plt.plot(y, label=y_label)
             plt.grid()
+            plt.legend(loc='upper left')
             plt.title(title)
             plt.show()
 
         if choose_plot == 2:
             for j in range(len(tests[0])):
-                line_graph(final_grades,[tests[i][j] for i in range(len(tests))], "Final grades vs " + str(exams[j]))
-                line_graph(replace_outliers(final_grades),replace_outliers([tests[i][j] for i in range(len(tests))]), "Final grades vs " + str(exams[j] + "(No outliers)"))
+                line_graph(final_grades,[tests[i][j] for i in range(len(tests))], "Final grades vs " + exams[j], "Final grades", exams[j])
+                line_graph(replace_outliers(final_grades),replace_outliers([tests[i][j] for i in range(len(tests))]), "Final grades vs " + exams[j] + "(No outliers)", "Final grades", exams[j])
 
         if choose_plot == 3:
-            line_graph(has_job_grades, no_job_grades, "Final grades Employed vs Unemployed")
+            line_graph(has_job_grades, no_job_grades, "Final grades Employed vs Unemployed", "Employed", "Unemployed")
             central_tendancy("Highest grade for Employed students",max, has_job_grades)
             central_tendancy("Highest grade for unemployed students",min, no_job_grades)
 
@@ -193,16 +195,27 @@ while menu:
             print("Correlation tests vs final exam " + str(pearson(average_test_results, final_grades)))
             print(pearson_results(pearson(average_test_results, final_grades)))
 
+        if choose_plot == 4:
+            for j in range(len(tests[j])):
+                scatter_data(no_job_grades, [no_job_tests[i][j] for i in range(len(no_job_tests))], "Unemployed grades vs Unemployed " + exams[j])
+
+        if choose_plot == 5:
+            line_graph(has_job_grades, no_job_grades, "Employed v Unemployed student final grades", "Employed", "Unemployed")
+            for j in range(len(has_job_tests[0])):
+                line_graph([has_job_tests[i][j] for i in range(len(has_job_tests))], [no_job_tests[i][j] for i in range(len(no_job_tests))], "Employed v Unemployed students " + exams[j], "Employed", "Unemployed")
+
+
+
     elif choice == 2:
         print("Linear regression")
 
         for j in range(len(tests[0])):
             alpha, beta = least_squares_fit(final_grades, [tests[i][j] for i in range(len(tests))])
             y=pearson(final_grades,[tests[i][j] for i in range(len(tests))])
-            print("correlation between Finalgrade & test no " + str(j+1), y)
-            print("rsquared results Finalgrade & test no " + str(j+1),r_squared(y))
-            print("Alpha Finalgrade & test no " + str(j+1), alpha)
-            print("beta Finalgrade & test no " + str(j+1), beta)
+            print("correlation between Finalgrade & " + exams[j], y)
+            print("rsquared results Finalgrade & " + exams[j],r_squared(y))
+            print("Alpha Finalgrade & " + exams[j], alpha)
+            print("beta Finalgrade & " + exams[j], beta)
             print("Regression Line: y =", beta, "x +",alpha)
             print("")
             print("")
@@ -270,8 +283,8 @@ while menu:
             plt.show()
 
         for j in range(len(tests[0])):
-            scatter_regression_line(final_grades, [tests[i][j] for i in range(len(tests))], "Final grades", "Test number " + str(j+1), "Final grades vs test number " + str(j+1))
-            scatter_regression_line(replace_outliers(final_grades), replace_outliers([tests[i][j] for i in range(len(tests))]), "Final grades (No outliers)", "Test number " + str(j+1) + " (No outliers)", "Final grades vs test number " + str(j+1) + " (No outliers)")
+            scatter_regression_line(final_grades, [tests[i][j] for i in range(len(tests))], "Final grades", exams[j], "Final grades vs " + exams[j])
+            scatter_regression_line(replace_outliers(final_grades), replace_outliers([tests[i][j] for i in range(len(tests))]), "Final grades (No outliers)", exams[j] + " (No outliers)", "Final grades vs " + exams[j] + " (No outliers)")
 
     elif choice == 3:
         print("multiple linear regression")

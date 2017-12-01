@@ -253,29 +253,47 @@ while menu:
         	alpha = np.mean(y)-(beta+.1*i)*np.mean(x)
         	return alpha, beta+.1*i
 
+        def scatter_regression_line(x, y, x_line, y_line, title):
+
+            # Scatter plot
+            plt.title(title)
+            plt.scatter(x, y)
+            plt.xlabel(x_line)
+            plt.ylabel(y_line)
+
+            # Add least squares regression line
+            axes = plt.gca()
+            m, b = np.polyfit(x, y, 1)
+            x_plot = np.linspace(axes.get_xlim()[0],axes.get_xlim()[1],100)
+            #Add line to graph
+            plt.plot(x_plot, m*x_plot + b, '-')
+            plt.show()
+
+        for j in range(len(tests[0])):
+            scatter_regression_line(final_grades, [tests[i][j] for i in range(len(tests))], "Final grades", "Test number " + str(j+1), "Final grades vs test number " + str(j+1))
+            scatter_regression_line(replace_outliers(final_grades), replace_outliers([tests[i][j] for i in range(len(tests))]), "Final grades (No outliers)", "Test number " + str(j+1) + " (No outliers)", "Final grades vs test number " + str(j+1) + " (No outliers)")
+
     elif choice == 3:
         print("multiple linear regression")
 
     elif choice == 4:
 
         def to_list(x, y):
-            l = []
-            for i in range(len(x)):
-                l.append([x[i], y[i]])
-            return l
+            """
+            Returns 2d list of each element x and y
+            """
+            return [[x[i], y[i]] for i in range(len(x))]
 
         def get_column(m, j):
             return [m_i[j] for m_i in m]
+        employed_v_unemployed = to_list([final_grades[i] for i in range(len(final_grades)) if has_job[i]], [final_grades[i] for i in range(len(final_grades)) if not has_job[i]])
 
-        for j in range(len(tests[0])):
-
-            final_grades_to_test = to_list(final_grades, [tests[i][j] for i in range(len(tests))])
-            print(final_grades_to_test)
+        def generate_k_means(data, clusters=4):
             print("K means clustering")
-            K_means = KMeans(n_clusters=4) # Define number of clusters
+            K_means = KMeans(n_clusters=clusters) # Define number of clusters
 
-            K_means.fit(final_grades_to_test)
-            cluster_assignment = K_means.predict(final_grades_to_test)    # Extracts
+            K_means.fit(data)
+            cluster_assignment = K_means.predict(data)    # Extracts
             print("Shows which cluster values are assigned to")
 
             cluster0 = []
@@ -285,13 +303,13 @@ while menu:
 
             for k in range(len(cluster_assignment)):
                 if cluster_assignment[k] == 0:
-                    cluster0.append(tests[k])
+                    cluster0.append(data[k])
                 if cluster_assignment[k] == 1:
-                    cluster1.append(tests[k])
+                    cluster1.append(data[k])
                 if cluster_assignment[k] == 2:
-                    cluster2.append(tests[k])
+                    cluster2.append(data[k])
                 if cluster_assignment[k] == 3:
-                    cluster3.append(tests[k])
+                    cluster3.append(data[k])
 
             x_cluster0 = get_column(cluster0, 0)
             y_cluster0 = get_column(cluster0, 1)
@@ -310,6 +328,13 @@ while menu:
             plt.scatter(x=x_cluster2, y=y_cluster2, color='blue')
             plt.scatter(x=x_cluster3, y=y_cluster3, color='black')
             plt.show()
+
+        generate_k_means(employed_v_unemployed)
+
+        for j in range(len(tests[0])):
+            # Compare final grades to each individual test
+            final_grades_to_test = to_list(final_grades, [tests[i][j] for i in range(len(tests))])
+            generate_k_means(final_grades_to_test)
 
 
     elif choice == 5:

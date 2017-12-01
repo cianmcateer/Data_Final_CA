@@ -3,7 +3,7 @@ from pymongo import MongoClient
 
 try:
     """Connect to mongod server"""
-    client = MongoClient('localhost')
+    client = MongoClient('localhost:27020')
 except:
     print("Could not connect to mongo server")
 
@@ -34,7 +34,7 @@ for i in range(1, len(lines)):
 
     student["student_id"] = int(attributes[0])
     student["tests"] = tests
-    student["part_time_job"] = attributes[6] == '1' 
+    student["part_time_job"] = attributes[6] == '1'
     student["final_grade"] = int(attributes[7])
 
     # Insert student object into student collection

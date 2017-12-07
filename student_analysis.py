@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from copy import deepcopy
 from sklearn.cluster import KMeans
 from scipy.spatial.distance import cdist
+import math
 
 def read_menu(path):
     menu = [line for line in open(path)]
@@ -14,7 +15,7 @@ def read_menu(path):
 
 def extract_json():
     try:
-        """Connect to mongod"""
+        """Connect to mongo server"""
         client = MongoClient('localhost')
         print("Succesful Connection to student database!")
     except:
@@ -83,7 +84,6 @@ def find_outliers(data):
 
 menu = True
 
-
 has_job_grades = [final_grades[i] for i in range(len(tests)) if has_job[i]]
 no_job_grades = [final_grades[i] for i in range(len(tests)) if not has_job[i]]
 
@@ -99,9 +99,6 @@ def pearson(x, y):
     Returns pearson coeffcient using numpy
     """
     return np.corrcoef(x, y)[0][1]
-
-def r_squared(x):
-    return x**2
 
 def pearson_results(coef):
     if coef == 1:
@@ -142,9 +139,10 @@ while menu:
 
         read_menu("menus/graphs.txt")
         choose_plot = input("Please choose plot")
-        def scatter_data(x, y, title):
+        def scatter_data(x, y, title, xlabel, ylabel):
             plt.title(title)
-            plt.xlabel("Scatter Plot: Final Grades vs Tests")
+            plt.xlabel(xlabel)
+            plt.ylabel(ylabel)
             plt.scatter(x, y, alpha=0.3)
             plt.grid()
             plt.show()
@@ -152,8 +150,7 @@ while menu:
         exams = ["Lab 1", "Christmas Test", "Lab 2", "Easter Test", "Lab 3"]
         if choose_plot == 1:
             for j in range(len(tests[0])):
-                scatter_data(final_grades, [tests[i][j] for i in range(len(tests))], "Final grade vs " + str(exams[j]))
-
+                scatter_data(final_grades, [tests[i][j] for i in range(len(tests))], "Final grade vs " + str(exams[j]), "Final Grades", exams[j])
 
         def line_graph(x, y, title, x_label, y_label):
             plt.plot(x, label=x_label)
@@ -182,7 +179,7 @@ while menu:
 
         if choose_plot == 4:
             for j in range(len(tests[j])):
-                scatter_data(no_job_grades, [no_job_tests[i][j] for i in range(len(no_job_tests))], "Unemployed grades vs Unemployed " + exams[j])
+                scatter_data(no_job_grades, [no_job_tests[i][j] for i in range(len(no_job_tests))], "Unemployed grades vs Unemployed " + exams[j], "Unemployed", "Employed")
 
         if choose_plot == 5:
             line_graph(has_job_grades, no_job_grades, "Employed v Unemployed student final grades", "Employed", "Unemployed")
@@ -215,6 +212,9 @@ while menu:
                 find_outliers([tests[i][j] for i in range(len(tests))])
                 print("")
 
+        else:
+            print("Invalid input")
+
     elif choice == 2:
 
         """
@@ -224,26 +224,43 @@ while menu:
         """
         print("Linear regression")
 
+        def mean(x):
+        	return sum(x)/len(x)
+
+        def r_squared(x):
+            return x**2
+
         def de_mean(x):
-        	x_bar=np.mean(x)
+        	x_bar=mean(x)
         	return[x_i-x_bar for x_i in x]
 
         def covariance(x,y):
         	n=len(x)
         	return np.dot(de_mean(x),de_mean(y))/(n-1)
 
+        def sum_of_squares(x):
+        	return sum([x_i**2 for x_i in x])
+
+        def variance(x):
+        	n=len(x)
+        	deviations=de_mean(x)
+        	return sum_of_squares(deviations)/(n-1)
+
+        def standard_deviation(x):
+        	return math.sqrt(variance(x))
+
         def correlation(x,y):
-        	stdev_x=np.std(x)
-        	stdev_y=np.std(y)
+        	stdev_x=standard_deviation(x)
+        	stdev_y=standard_deviation(y)
         	if stdev_x>0 and stdev_y>0:
         		return covariance(x,y)/stdev_x/stdev_y
         	else:
         		return 0
 
-        def least_squares_fit(x, y):
-            beta = correlation(x, y)*np.std(x)*np.std(y)
-            alpha = np.mean(y)-beta*np.mean(x)
-            return alpha, beta
+        def least_squares_fit(x,y):
+        	beta = correlation(x,y)*standard_deviation(y)/standard_deviation(x)
+        	alpha = mean(y)-beta*mean(x)
+        	return alpha, beta
 
         for j in range(len(tests[0])):
             alpha, beta = least_squares_fit(final_grades, [tests[i][j] for i in range(len(tests))])
@@ -275,10 +292,6 @@ while menu:
         	error = y-predict_y(alpha,beta,x)
         	return error
 
-        def de_mean(x):
-        	x_bar=np.mean(x)
-        	return[x_i-x_bar for x_i in x]
-
         def sum_of_squared_errors(alpha,beta,x,y):
         	return sum((error(alpha,beta,x_i,y_i)**2 for x_i, y_i in zip(x,y)))
 
@@ -294,8 +307,8 @@ while menu:
         	return 1-(sum_of_squared_errors(alpha,beta,x,y)/sum_of_squares(de_mean(y)))
 
         def least_squares_fit_test(x,y,i):
-        	beta = correlation(x,y)*np.std(y)/np.std(x)
-        	alpha = np.mean(y)-(beta+.1*i)*np.mean(x)
+        	beta = correlation(x,y)*standard_deviation(y)/standard_deviation(x)
+        	alpha = mean(y)-(beta+.1*i)*mean(x)
         	return alpha, beta+.1*i
 
         def scatter_regression_line(x, y, x_line, y_line, title):
@@ -322,14 +335,25 @@ while menu:
             print(r_squared2(alpha,beta,final_grades,tests[j]))
             print("")
 
+        """for i in [40,50,60,70,80,55,35,20,62,73,30]:
+            for j in range(len(tests[0])):
+            	print(i,"sum_Sq_errors",sum_of_squared_errors(alpha+i*.1,beta+i*.1,final_grades,tests[j]))
+            	print(i,"r_sq",r_squared2(alpha+.1*i,beta+.1*i,final_grades,tests[j]))
+            	print(-i,"sum_Sq_errors",sum_of_squared_errors(alpha-i*.1,beta-i*.1,final_grades,tests[j]))
+            	print(-i,"r_sq",r_squared2(alpha-.1*i,beta-.1*i,final_grades,tests[j]))
+                print("")
+                print("")
 
-        """for i in [-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0]:
-        	alpha,beta = least_squares_fit_test(num_friends_good,daily_minutes_good,i)
-        	print(i,sum_of_squared_errors(alpha,beta,num_friends_good,daily_minutes_good),sum_of_squares(de_mean(daily_minutes_good)))
-        	print(i,r_squared(alpha,beta,num_friends_good,daily_minutes_good))
-        	alpha,beta = least_squares_fit_test(num_friends_good,daily_minutes_good,i)
-        	print(-i,sum_of_squared_errors(alpha,beta,num_friends_good,daily_minutes_good))
-        	print(-i,r_squared(alpha,beta,num_friends_good,daily_minutes_good))"""
+
+        for i in [40,50,60,70,80,55,35,20,62,73,30]:
+            for j in range(len(tests[0])):
+            	alpha,beta = least_squares_fit_test(final_grades,tests[j],i)
+            	print(i,sum_of_squared_errors(alpha,beta,final_grades,tests[j]),sum_of_squares(de_mean(final_grades)))
+            	print(i,r_squared2(alpha,beta,final_grades,tests[j]))
+            	alpha,beta = least_squares_fit_test(final_grades,tests[j],i)
+            	print(-i,sum_of_squared_errors(alpha,beta,final_grades,tests[j]))
+            	print(-i,r_squared2(alpha,beta,final_grades,tests[j]))"""
+
 
     elif choice == 3:
         print("multiple linear regression")
@@ -494,11 +518,12 @@ while menu:
 
         def get_column(m, j):
             return [m_i[j] for m_i in m]
+
         employed_v_unemployed = to_list([final_grades[i] for i in range(len(final_grades)) if has_job[i]], [final_grades[i] for i in range(len(final_grades)) if not has_job[i]])
 
         def generate_k_means(data, xlabel, ylabel):
             print("K means clustering")
-            K_means = KMeans(n_clusters=6) # Define number of clusters
+            K_means = KMeans(n_clusters=4) # Define number of clusters
 
             K_means.fit(data)
             cluster_assignment = K_means.predict(data)    # Extracts
@@ -508,11 +533,9 @@ while menu:
             cluster1 = []
             cluster2 = []
             cluster3 = []
-            cluster4 = []
-            cluster5 = []
-            cluster6 = []
 
             for k in range(len(cluster_assignment)):
+
                 if cluster_assignment[k] == 0:
                     cluster0.append(data[k])
                 if cluster_assignment[k] == 1:
@@ -521,10 +544,7 @@ while menu:
                     cluster2.append(data[k])
                 if cluster_assignment[k] == 3:
                     cluster3.append(data[k])
-                if cluster_assignment[k] == 4:
-                    cluster4.append(data[k])
-                if cluster_assignment[k] == 5:
-                    cluster5.append(data[k])
+
 
             x_cluster0 = get_column(cluster0, 0)
             y_cluster0 = get_column(cluster0, 1)
@@ -538,18 +558,11 @@ while menu:
             x_cluster3 = get_column(cluster3, 0)
             y_cluster3 = get_column(cluster3, 1)
 
-            x_cluster4 = get_column(cluster4, 0)
-            y_cluster4 = get_column(cluster4, 1)
-
-            x_cluster5 = get_column(cluster5, 0)
-            y_cluster5 = get_column(cluster5, 1)
-
             plt.scatter(x=x_cluster0, y=y_cluster0, color='green')
             plt.scatter(x=x_cluster1, y=y_cluster1, color='red')
             plt.scatter(x=x_cluster2, y=y_cluster2, color='blue')
             plt.scatter(x=x_cluster3, y=y_cluster3, color='black')
-            plt.scatter(x=x_cluster4, y=y_cluster4, color='grey')
-            plt.scatter(x=x_cluster5, y=y_cluster5, color='purple')
+
             plt.xlabel(xlabel)
             plt.ylabel(ylabel)
             plt.show()
@@ -573,7 +586,7 @@ while menu:
             plt.show()
 
         generate_k_means(employed_v_unemployed, "Employed", "Unemployed")
-        elbow_method(employed_v_unemployed)
+        elbow_method(tests)
 
         for j in range(len(tests[0])):
             # Compare final grades to each individual test

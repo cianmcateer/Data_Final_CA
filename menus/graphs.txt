@@ -5,4 +5,6 @@
 # 3. Employed vs Unemployed students                                             #
 # 4. Scatter plot Final grades vs previous exams (Unemployed)                    #
 # 5. Grades employed vs unemployed                                               #
+# 6. Correlation and Covariance                                                  #
+# 7. Outlier analysis                                                            #
 ##################################################################################

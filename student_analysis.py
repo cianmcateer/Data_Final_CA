@@ -47,36 +47,39 @@ to_list()
 
 """Dealing with outliers"""
 
-def replace_outliers(data):
+def find_outliers(data):
     """
     Calculate first and third_quartile using numpy.percentile
-    loop through list and replace all outliers with mean of list
+    loop through list and count all outliers found
     """
-    output = deepcopy(data)
 
-    first_quartile = np.percentile(output, 25)
-    third_quartile = np.percentile(output, 75)
+    first_quartile = np.percentile(data, 25)
+    third_quartile = np.percentile(data, 75)
 
-    #outlier_indexes = [i for i, x in enumerate(output) if x < first_quartile or x > third_quartile]
+    iqr = third_quartile - first_quartile
 
-    replacement_mean = np.mean(output)
-    for i in range(len(output)):
-        if output[i] < first_quartile or output[i] > third_quartile:
-            output[i] = replacement_mean
+    mild_outliers = 0
+    extreme_outliers = 0
 
-    return output
+    for i in range(len(data)):
+        if data[i] < first_quartile - (1.5 * iqr) or data[i] > third_quartile + (1.5 * iqr):
+            mild_outliers += 1
+        if data[i] < first_quartile - (3 * iqr) or data[i] > third_quartile + (3 * iqr):
+            extreme_outliers += 1
 
-grades_minus_outliers = replace_outliers(final_grades)
+    if extreme_outliers == 0:
+        print("No extreme outliers found!")
+    elif extreme_outliers == 1:
+        print(str(extreme_outliers) + " extreme outlier found!")
+    else:
+        print(str(extreme_outliers) + " extreme outliers found!")
 
-lab_1_no = replace_outliers([tests[i][0] for i in range(len(tests))])
-christmas_test_no = replace_outliers([tests[i][1] for i in range(len(tests))])
-lab_2_no = replace_outliers([tests[i][2] for i in range(len(tests))])
-easter_test_no = replace_outliers([tests[i][3] for i in range(len(tests))])
-lab_3_no = replace_outliers([tests[i][4] for i in range(len(tests))])
-
-tests_no = []
-for i in range(len(tests)):
-    tests_no.append([lab_1_no[i], christmas_test_no[i], lab_2_no[i], easter_test_no[i], lab_3_no[i]])
+    if mild_outliers == 0:
+        print("No mild outliers found!")
+    elif mild_outliers == 1:
+        print("Only " + str(mild_outliers) + " mild outlier found!")
+    else:
+        print(str(mild_outliers) + " mild outliers found!")
 
 menu = True
 
@@ -122,7 +125,7 @@ while menu:
     read_menu("menus/main_menu.txt")
     choice = input("Please choose")
     exams = ["Lab 1", "Christmas Test", "Lab 2", "Easter Test", "Lab 3"]
-    
+
     if choice == 0:
         menu = False
         print("Goodbye!")
@@ -150,7 +153,7 @@ while menu:
         if choose_plot == 1:
             for j in range(len(tests[0])):
                 scatter_data(final_grades, [tests[i][j] for i in range(len(tests))], "Final grade vs " + str(exams[j]))
-                scatter_data(replace_outliers(final_grades), replace_outliers([tests[i][j] for i in range(len(tests))]), "Final grade vs " + str(exams[j]) + "(No outliers)")
+
 
         def line_graph(x, y, title, x_label, y_label):
             plt.plot(x, label=x_label)
@@ -163,7 +166,7 @@ while menu:
         if choose_plot == 2:
             for j in range(len(tests[0])):
                 line_graph(final_grades,[tests[i][j] for i in range(len(tests))], "Final grades vs " + exams[j], "Final grades", exams[j])
-                line_graph(replace_outliers(final_grades),replace_outliers([tests[i][j] for i in range(len(tests))]), "Final grades vs " + exams[j] + "(No outliers)", "Final grades", exams[j])
+
 
         if choose_plot == 3:
             print(max(final_grades))
@@ -192,14 +195,25 @@ while menu:
             print("Average grade for employed students", np.mean(has_job_grades))
             print("Average grade for unemployed students", np.mean(no_job_grades))
 
-            print("Lowest grade for Employed students",min(has_job_grades))
-            print("Lowest grade for Unemployed students",min(no_job_grades))
+            print("Lowest grade for Employed students", min(has_job_grades))
+            print("Lowest grade for Unemployed students", min(no_job_grades))
 
-            print(np.cov(final_grades, [tests[i][0]for i in range(len(tests))]) )
+            #print(np.cov(final_grades, [tests[i][0] for i in range(len(tests))]))
 
             print("Pearson correlation")
             print("Correlation tests vs final exam " + str(pearson(average_test_results, final_grades)))
             print(pearson_results(pearson(average_test_results, final_grades)))
+
+        if choose_plot == 7:
+            print("Number of outliers in each set")
+            print("")
+            print("Final Grades")
+            find_outliers(final_grades)
+            print("")
+            for j in range(len(tests[0])):
+                print(exams[j])
+                find_outliers([tests[i][j] for i in range(len(tests))])
+                print("")
 
     elif choice == 2:
 
@@ -301,8 +315,7 @@ while menu:
             plt.show()
 
         """for j in range(len(tests[0])):
-            scatter_regression_line(final_grades, [tests[i][j] for i in range(len(tests))], "Final grades", exams[j], "Final grades vs " + exams[j])
-            scatter_regression_line(replace_outliers(final_grades), replace_outliers([tests[i][j] for i in range(len(tests))]), "Final grades (No outliers)", exams[j] + " (No outliers)", "Final grades vs " + exams[j] + " (No outliers)")"""
+            scatter_regression_line(final_grades, [tests[i][j] for i in range(len(tests))], "Final grades", exams[j], "Final grades vs " + exams[j])"""
 
         for j in range(len(tests[0])):
             print("Sum of squared errors", sum_of_squared_errors(alpha,beta,final_grades,tests[j]))
@@ -447,18 +460,24 @@ while menu:
                 stats.append(stat)
             return stats
 
-        # NOTE: change 20 to a lower value to load faster
-        sample_stotatics = bootstrap_statistic(tests, final_grades, stochastic_gradient, 1)
+        tests_with_independent = deepcopy(tests)
 
-        def multiple_linear_regression(test1, christmas_test, lab2, easter_test, has_job):
+        for i in range(len(tests_with_independent)):
+            tests_with_independent[i].insert(0, 1)
+
+
+        # NOTE: change 20 to a lower value to load faster
+        sample_stotatics = bootstrap_statistic(tests_with_independent, final_grades, stochastic_gradient, 1)
+        print(sample_stotatics)
+        def multiple_linear_regression(lab1, christmas_test, lab2, easter_test, lab3):
 
             linear_regressions = []
             for i in range(len(sample_stotatics)):
-                regression = (sample_stotatics[i][0]*test1) + (sample_stotatics[i][1]*christmas_test) + (sample_stotatics[i][2]*lab2), (sample_stotatics[i][3]*easter_test)
+                regression = sample_stotatics[i][0] + (sample_stotatics[i][1]*lab1) + (sample_stotatics[i][2]*christmas_test) + (sample_stotatics[i][3]*lab2) + (sample_stotatics[i][4]*easter_test) + (sample_stotatics[i][5]*lab3)
                 linear_regressions.append(regression)
             return linear_regressions
         for i in range(len(sample_stotatics)):
-            print(multiple_linear_regression(44, 66, 33, 55, False))
+            print(multiple_linear_regression(50, 50, 50, 50, 50))
 
     elif choice == 4:
 
@@ -477,9 +496,9 @@ while menu:
             return [m_i[j] for m_i in m]
         employed_v_unemployed = to_list([final_grades[i] for i in range(len(final_grades)) if has_job[i]], [final_grades[i] for i in range(len(final_grades)) if not has_job[i]])
 
-        def generate_k_means(data, clusters=4):
+        def generate_k_means(data, xlabel, ylabel):
             print("K means clustering")
-            K_means = KMeans(n_clusters=clusters) # Define number of clusters
+            K_means = KMeans(n_clusters=6) # Define number of clusters
 
             K_means.fit(data)
             cluster_assignment = K_means.predict(data)    # Extracts
@@ -489,6 +508,9 @@ while menu:
             cluster1 = []
             cluster2 = []
             cluster3 = []
+            cluster4 = []
+            cluster5 = []
+            cluster6 = []
 
             for k in range(len(cluster_assignment)):
                 if cluster_assignment[k] == 0:
@@ -499,6 +521,10 @@ while menu:
                     cluster2.append(data[k])
                 if cluster_assignment[k] == 3:
                     cluster3.append(data[k])
+                if cluster_assignment[k] == 4:
+                    cluster4.append(data[k])
+                if cluster_assignment[k] == 5:
+                    cluster5.append(data[k])
 
             x_cluster0 = get_column(cluster0, 0)
             y_cluster0 = get_column(cluster0, 1)
@@ -512,18 +538,48 @@ while menu:
             x_cluster3 = get_column(cluster3, 0)
             y_cluster3 = get_column(cluster3, 1)
 
+            x_cluster4 = get_column(cluster4, 0)
+            y_cluster4 = get_column(cluster4, 1)
+
+            x_cluster5 = get_column(cluster5, 0)
+            y_cluster5 = get_column(cluster5, 1)
+
             plt.scatter(x=x_cluster0, y=y_cluster0, color='green')
             plt.scatter(x=x_cluster1, y=y_cluster1, color='red')
             plt.scatter(x=x_cluster2, y=y_cluster2, color='blue')
             plt.scatter(x=x_cluster3, y=y_cluster3, color='black')
+            plt.scatter(x=x_cluster4, y=y_cluster4, color='grey')
+            plt.scatter(x=x_cluster5, y=y_cluster5, color='purple')
+            plt.xlabel(xlabel)
+            plt.ylabel(ylabel)
             plt.show()
 
-        generate_k_means(employed_v_unemployed)
+        def elbow_method(data):
+            no_clusters = range(1, 11)
+            average_dist = []
+
+            for k in no_clusters:
+                modelk = KMeans(k)
+                modelk.fit(data)
+                cluster_assign = modelk.predict(data)
+                print(k, cluster_assign)
+                average_dist.append(sum(np.min(cdist(data, modelk.cluster_centers_, 'euclidean'),axis=1))/len(data))
+            print(average_dist)
+
+            plt.plot(no_clusters, average_dist)
+            plt.title("Elbow method to determine optimum K")
+            plt.xlabel("Number of clusters")
+            plt.ylabel("Average Distance")
+            plt.show()
+
+        generate_k_means(employed_v_unemployed, "Employed", "Unemployed")
+        elbow_method(employed_v_unemployed)
 
         for j in range(len(tests[0])):
             # Compare final grades to each individual test
             final_grades_to_test = to_list(final_grades, [tests[i][j] for i in range(len(tests))])
-            generate_k_means(final_grades_to_test)
+            generate_k_means(final_grades_to_test, "Final Grades", exams[j])
+            elbow_method(final_grades_to_test)
 
 
     elif choice == 5:

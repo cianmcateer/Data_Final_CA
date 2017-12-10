@@ -45,43 +45,6 @@ def to_list():
 
 to_list()
 
-
-"""Dealing with outliers"""
-
-def find_outliers(data):
-    """
-    Calculate first and third_quartile using numpy.percentile
-    loop through list and count all outliers found
-    """
-
-    first_quartile = np.percentile(data, 25)
-    third_quartile = np.percentile(data, 75)
-
-    iqr = third_quartile - first_quartile
-
-    mild_outliers = 0
-    extreme_outliers = 0
-
-    for i in range(len(data)):
-        if data[i] < first_quartile - (1.5 * iqr) or data[i] > third_quartile + (1.5 * iqr):
-            mild_outliers += 1
-        if data[i] < first_quartile - (3 * iqr) or data[i] > third_quartile + (3 * iqr):
-            extreme_outliers += 1
-
-    if extreme_outliers == 0:
-        print("No extreme outliers found!")
-    elif extreme_outliers == 1:
-        print(str(extreme_outliers) + " extreme outlier found!")
-    else:
-        print(str(extreme_outliers) + " extreme outliers found!")
-
-    if mild_outliers == 0:
-        print("No mild outliers found!")
-    elif mild_outliers == 1:
-        print("Only " + str(mild_outliers) + " mild outlier found!")
-    else:
-        print(str(mild_outliers) + " mild outliers found!")
-
 menu = True
 
 has_job_grades = [final_grades[i] for i in range(len(tests)) if has_job[i]]
@@ -119,7 +82,7 @@ def pearson_results(coef):
         print("Invalid value")
 
 while menu:
-    read_menu("menus/main_menu.txt")
+    #read_menu("menus/main_menu.txt")
     choice = input("Please choose")
     exams = ["Lab 1", "Christmas Test", "Lab 2", "Easter Test", "Lab 3"]
 
@@ -137,7 +100,7 @@ while menu:
         the creation of appropriate visualisations and the generation of covariance & correlation statistics.
         """
 
-        read_menu("menus/graphs.txt")
+        #read_menu("menus/graphs.txt")
         choose_plot = input("Please choose plot")
         def scatter_data(x, y, title, xlabel, ylabel):
             plt.title(title)
@@ -203,6 +166,42 @@ while menu:
 
         if choose_plot == 7:
             print("Number of outliers in each set")
+            """Dealing with outliers"""
+
+            def find_outliers(data):
+                """
+                Calculate first and third_quartile using numpy.percentile
+                loop through list and count all outliers found
+                """
+
+                first_quartile = np.percentile(data, 25)
+                third_quartile = np.percentile(data, 75)
+
+                iqr = third_quartile - first_quartile
+
+                mild_outliers = 0
+                extreme_outliers = 0
+
+                for i in range(len(data)):
+                    if data[i] < first_quartile - (1.5 * iqr) or data[i] > third_quartile + (1.5 * iqr):
+                        mild_outliers += 1
+                    if data[i] < first_quartile - (3 * iqr) or data[i] > third_quartile + (3 * iqr):
+                        extreme_outliers += 1
+
+                if extreme_outliers == 0:
+                    print("No extreme outliers found!")
+                elif extreme_outliers == 1:
+                    print(str(extreme_outliers) + " extreme outlier found!")
+                else:
+                    print(str(extreme_outliers) + " extreme outliers found!")
+
+                if mild_outliers == 0:
+                    print("No mild outliers found!")
+                elif mild_outliers == 1:
+                    print("Only " + str(mild_outliers) + " mild outlier found!")
+                else:
+                    print(str(mild_outliers) + " mild outliers found!")
+                    
             print("")
             print("Final Grades")
             find_outliers(final_grades)
@@ -528,45 +527,11 @@ while menu:
             K_means.fit(data)
             cluster_assignment = K_means.predict(data)    # Extracts
             print("Shows which cluster values are assigned to")
-
-            cluster0 = []
-            cluster1 = []
-            cluster2 = []
-            cluster3 = []
-
-            for k in range(len(cluster_assignment)):
-
-                if cluster_assignment[k] == 0:
-                    cluster0.append(data[k])
-                if cluster_assignment[k] == 1:
-                    cluster1.append(data[k])
-                if cluster_assignment[k] == 2:
-                    cluster2.append(data[k])
-                if cluster_assignment[k] == 3:
-                    cluster3.append(data[k])
+            #   find the means in each cluster
 
 
-            x_cluster0 = get_column(cluster0, 0)
-            y_cluster0 = get_column(cluster0, 1)
-
-            x_cluster1 = get_column(cluster1, 0)
-            y_cluster1 = get_column(cluster1, 1)
-
-            x_cluster2 = get_column(cluster2, 0)
-            y_cluster2 = get_column(cluster2, 1)
-
-            x_cluster3 = get_column(cluster3, 0)
-            y_cluster3 = get_column(cluster3, 1)
-
-            plt.scatter(x=x_cluster0, y=y_cluster0, color='green')
-            plt.scatter(x=x_cluster1, y=y_cluster1, color='red')
-            plt.scatter(x=x_cluster2, y=y_cluster2, color='blue')
-            plt.scatter(x=x_cluster3, y=y_cluster3, color='black')
-
-            plt.xlabel(xlabel)
-            plt.ylabel(ylabel)
+            plt.scatter(x=get_column(data,0), y=get_column(data,1), c=K_means.labels_)
             plt.show()
-
         def elbow_method(data):
             no_clusters = range(1, 11)
             average_dist = []

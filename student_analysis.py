@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from copy import deepcopy
 from sklearn.cluster import KMeans
 from scipy.spatial.distance import cdist
+from sklearn.decomposition import PCA
 import math
 
 def read_menu(path):
@@ -44,6 +45,12 @@ def to_list():
         final_grades.append(s["final_grade"])
 
 to_list()
+
+def get_column(m, j):
+    """
+    Used in k_means and PCA sections
+    """
+    return [m_i[j] for m_i in m]
 
 menu = True
 
@@ -151,7 +158,6 @@ while menu:
 
         if choose_plot == 6:
 
-
             print("Average grade for employed students", np.mean(has_job_grades))
             print("Average grade for unemployed students", np.mean(no_job_grades))
 
@@ -201,7 +207,7 @@ while menu:
                     print("Only " + str(mild_outliers) + " mild outlier found!")
                 else:
                     print(str(mild_outliers) + " mild outliers found!")
-                    
+
             print("")
             print("Final Grades")
             find_outliers(final_grades)
@@ -421,7 +427,6 @@ while menu:
             to fit in with bootstrap sample
             """
 
-            random.seed(0)
             v_0 = [random.random() for x_i in x[0]]
             v = v_0
             step_size = 0.001
@@ -490,17 +495,62 @@ while menu:
 
 
         # NOTE: change 20 to a lower value to load faster
-        sample_stotatics = bootstrap_statistic(tests_with_independent, final_grades, stochastic_gradient, 1)
+        sample_stotatics = bootstrap_statistic(tests_with_independent, final_grades, stochastic_gradient, 2)
         print(sample_stotatics)
+
         def multiple_linear_regression(lab1, christmas_test, lab2, easter_test, lab3):
 
             linear_regressions = []
             for i in range(len(sample_stotatics)):
                 regression = sample_stotatics[i][0] + (sample_stotatics[i][1]*lab1) + (sample_stotatics[i][2]*christmas_test) + (sample_stotatics[i][3]*lab2) + (sample_stotatics[i][4]*easter_test) + (sample_stotatics[i][5]*lab3)
                 linear_regressions.append(regression)
-            return linear_regressions
-        for i in range(len(sample_stotatics)):
-            print(multiple_linear_regression(50, 50, 50, 50, 50))
+
+            for r in linear_regressions:
+                print(r)
+
+        multiple_linear_regression(56, 52, 55, 57, 69)
+        estimate_v = stochastic_gradient(tests, final_grades)
+
+        def mean(x):
+            return sum(x)/len(x)
+
+        def de_mean(x):
+        	x_bar=mean(x)
+        	return[x_i-x_bar for x_i in x]
+
+        def sum_of_squares(x):
+        	return sum([x_i**2 for x_i in x])
+
+        def variance(x):
+            """assumes x has at least two elements"""
+            n = len(x)
+            deviations = de_mean(x)
+            return sum_of_squares(deviations) / (n - 1)
+
+        def standard_deviation(x):
+            return math.sqrt(variance(x))
+
+        bootstrap_standard_errors = [standard_deviation([sample[i] for sample in sample_stotatics]) for i in range(len(estimate_v))]
+
+        def normal_cdf(x, mu=0,sigma=1):
+            return (1 + math.erf((x - mu) / math.sqrt(2) / sigma)) / 2
+
+        def p_value(beta_hat_j, sigma_hat_j):
+            if beta_hat_j > 0:
+                return 2 * (1 - normal_cdf(beta_hat_j / sigma_hat_j))
+            else:
+                return 2 * normal_cdf(beta_hat_j / sigma_hat_j)
+
+        for i in range(len(estimate_v)):
+        	print("i",i,"estimate_v",estimate_v[i],"error", bootstrap_standard_errors[i],"p-value", p_value(estimate_v[i], bootstrap_standard_errors[i]))
+
+
+        #  after 100 bootstraps
+        print("bootstrap standard errors", bootstrap_standard_errors)
+        print("p_value(30.63, 1.174)", p_value(30.63, 1.174))
+        print("p_value(0.972, 0.079)", p_value(0.972, 0.079))
+        print("p_value(-1.868, 0.131)", p_value(-1.868, 0.131))
+        print("p_value(0.911, 0.990)", p_value(0.911, 0.990))
 
     elif choice == 4:
 
@@ -515,12 +565,9 @@ while menu:
             """
             return [[x[i], y[i]] for i in range(len(x))]
 
-        def get_column(m, j):
-            return [m_i[j] for m_i in m]
-
         employed_v_unemployed = to_list([final_grades[i] for i in range(len(final_grades)) if has_job[i]], [final_grades[i] for i in range(len(final_grades)) if not has_job[i]])
 
-        def generate_k_means(data, xlabel, ylabel):
+        def generate_k_means(data, x_label, y_label, clusters=4):
             print("K means clustering")
             K_means = KMeans(n_clusters=4) # Define number of clusters
 
@@ -540,24 +587,21 @@ while menu:
                 modelk = KMeans(k)
                 modelk.fit(data)
                 cluster_assign = modelk.predict(data)
-                print(k, cluster_assign)
                 average_dist.append(sum(np.min(cdist(data, modelk.cluster_centers_, 'euclidean'),axis=1))/len(data))
-            print(average_dist)
 
             plt.plot(no_clusters, average_dist)
             plt.title("Elbow method to determine optimum K")
-            plt.xlabel("Number of clusters")
-            plt.ylabel("Average Distance")
+
             plt.show()
 
+        elbow_method(employed_v_unemployed)
         generate_k_means(employed_v_unemployed, "Employed", "Unemployed")
-        elbow_method(tests)
 
-        for j in range(len(tests[0])):
+        '''for j in range(len(tests[0])):
             # Compare final grades to each individual test
             final_grades_to_test = to_list(final_grades, [tests[i][j] for i in range(len(tests))])
             generate_k_means(final_grades_to_test, "Final Grades", exams[j])
-            elbow_method(final_grades_to_test)
+            elbow_method(final_grades_to_test)'''
 
 
     elif choice == 5:
@@ -567,6 +611,52 @@ while menu:
         identify the first & second principal components of
         your data set and create appropriate visualisations of your clusters.
         """
+
+        def generate_principle_componant(data, xlabel, ylabel):
+            print("K means clustering")
+            K_means = KMeans(2) # Define number of clusters
+
+            K_means.fit(data)
+            cluster_assignment = K_means.predict(data)    # Extracts
+            print("Shows which cluster values are assigned to")
+            #   find the means in each cluster
+
+
+            plt.scatter(x=get_column(data,0), y=get_column(data,1), c=K_means.labels_)
+            plt.show()
+
+            # Principal Component Analysis
+            pca = PCA(2)
+            plot_data = pca.fit_transform(data)
+            PC = pca.components_
+            PCEV=pca.explained_variance_
+            PCEVR=pca.explained_variance_ratio_
+            print("principal components are:", PC)
+            print("variance explained by each PC is", PCEV)
+            print("proportion of variance explained by each PC is", PCEVR)
+            print("transformed data", plot_data)
+
+            plt.scatter(x=plot_data[:,0], y=plot_data[:,1], c=K_means.labels_,)
+            plt.xlabel('Principal Component 1')
+            plt.ylabel('Principal Component 2')
+            plt.title('Scatterplot of Principal Components for 3 Clusters')
+            plt.show()
+
+            # Principal Component Analysis - Screeplot
+            pca = PCA()
+            plot_data = pca.fit_transform(data)
+            PC = pca.components_
+            PCEV=pca.explained_variance_
+            PCEVR=pca.explained_variance_ratio_
+            x=[i+1 for i in range(len(PC))]
+            plt.plot(x, PCEV)
+            plt.xlabel(xlabel)
+            plt.ylabel(xlabel)
+            plt.title('Scree-plot')
+            plt.show()
+
+        generate_principle_componant(tests, "x", "y")
+
 
     else:
         print("Invalid input, please try again")

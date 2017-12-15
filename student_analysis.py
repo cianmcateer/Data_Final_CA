@@ -99,7 +99,11 @@ def pearson_results(coef):
         print("Invalid value")
 
 while menu:
-    read_menu("menus/main_menu.txt")
+    try:
+        read_menu("menus/main_menu.txt")
+    except:
+        print("Error reading menu file please use 'menu/main_menu.txt' as a guide")
+
     choice = input("Please choose")
     exams = ["Lab 1", "Christmas Test", "Lab 2", "Easter Test", "Lab 3"]
 
@@ -117,7 +121,11 @@ while menu:
         the creation of appropriate visualisations and the generation of covariance & correlation statistics.
         """
 
-        read_menu("menus/graphs.txt")
+        try:
+            read_menu("menus/graphs.txt")
+        except:
+            print("Error reading graph menu, please read 'graphs.txt' for instructions")
+
         choose_plot = input("Please choose plot")
         def scatter_data(x, y, title, xlabel, ylabel):
             plt.title(title)

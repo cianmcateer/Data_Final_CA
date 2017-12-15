@@ -3,12 +3,12 @@ from pymongo import MongoClient
 
 try:
     """Connect to mongod server"""
-    client = MongoClient('localhost:27020')
+    client = MongoClient('localhost')
 except:
     print("Could not connect to mongo server")
 
 """Set database and collection we are inserting to"""
-db = client.final_data
+db = client.students
 collection = db.students
 
 path = "/Users/CianMcAteer/year_3/semester_1/data_final_ca/FinalProjectData1718.csv"
